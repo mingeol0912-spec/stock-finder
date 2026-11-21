@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>내 손안의 주식 탐지기</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; background: #121212; color: #fff; margin: 0; padding: 16px; }
+    h1 { font-size: 20px; text-align: center; color: #4ade80; margin-bottom: 16px; }
+    .card { background: #1e1e1e; padding: 16px; border-radius: 12px; margin-bottom: 16px; }
+    input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
+    input { background: #2c2c2c; color: #fff; }
+    button { background: #4ade80; color: #000; font-weight: bold; cursor: pointer; }
+    .item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333; }
+    .del-btn { width: auto; background: #ef4444; color: #fff; padding: 6px 12px; font-size: 12px; margin: 0; }
+  </style>
+</head>
+<body>
+  <h1>📈 나만의 주식 탐지기</h1>
+
+  <!-- 실시간 차트 검색 -->
+  <div class="card">
+    <div style="font-weight:bold;">🔍 실시간 차트 탐지 (미국/한국 티커)</div>
+    <input type="text" id="tickerInput" placeholder="예: AAPL, TSLA, NVDA, 005930" value="NVDA">
+    <button onclick="loadChart()">차트 불러오기</button>
+    <div id="chartBox" style="height: 320px; margin-top: 12px;"></div>
+  </div>
+
+  <!-- 관심 종목 & 목표가 메모 -->
+  <div class="card">
+    <div style="font-weight:bold;">🎯 관심 종목 & 목표가 탐지 리스트</div>
+    <input type="text" id="stockName" placeholder="종목명 (예: 엔비디아)">
+    <input type="number" id="targetPrice" placeholder="목표 매수가 (예: 120)">
+    <button onclick="addStock()">리스트에 추가</button>
+    <div id="stockList" style="margin-top: 12px;"></div>
+  </div>
+
+  <script src="https://tradingview.com"></script>
+  <script>
+    function loadChart() {
+      let symbol = document.getElementById('tickerInput').value.trim().toUpperCase();
+      if (/^\d{6}$/.test(symbol)) symbol = "KRX:" + symbol;
+      document.getElementById('chartBox').innerHTML = "";
+      new TradingView.widget({
+        "autosize": true, "symbol": symbol, "interval": "D",
+        "timezone": "Asia/Seoul", "theme": "dark", "style": "1",
+        "locale": "kr", "container_id": "chartBox"
+      });
+    }
+    loadChart();
+
+    let stocks = JSON.parse(localStorage.getItem('myStocks') || '[]');
+    function render() {
+      const list = document.getElementById('stockList');
+      list.innerHTML = stocks.map((s, i) => `
+        <div class="item">
+          <div><strong>${s.name}</strong><br><span style="color:#4ade80;font-size:14px;">목표가: ${s.price}</span></div>
+          <button class="del-btn" onclick="delStock(${i})">삭제</button>
+        </div>
+      `).join('');
+    }
+    function addStock() {
+      const name = document.getElementById('stockName').value;
+      const price = document.getElementById('targetPrice').value;
+      if (!name || !price) return alert('종목명과 목표가를 입력하세요!');
+      stocks.push({ name, price });
+      localStorage.setItem('myStocks', JSON.stringify(stocks));
+      document.getElementById('stockName').value = '';
+      document.getElementById('targetPrice').value = '';
+      render();
+    }
+    function delStock(i) {
+      stocks.splice(i, 1);
+      localStorage.setItem('myStocks', JSON.stringify(stocks));
+      render();
+    }
+    render();
+  </script>
+</body>
+</html>
