@@ -13,6 +13,7 @@
     button { background: #4ade80; color: #000; font-weight: bold; cursor: pointer; }
     .item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333; }
     .del-btn { width: auto; background: #ef4444; color: #fff; padding: 6px 12px; font-size: 12px; margin: 0; }
+    .hint { font-size: 12px; color: #aaa; margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -20,26 +21,46 @@
 
   <!-- 실시간 차트 검색 -->
   <div class="card">
-    <div style="font-weight:bold;">🔍 실시간 차트 탐지 (미국/한국 티커)</div>
-    <input type="text" id="tickerInput" placeholder="예: AAPL, TSLA, NVDA, 005930" value="NVDA">
+    <div style="font-weight:bold;">🔍 실시간 차트 탐지 (회사명 / 티커 / 종목코드)</div>
+    <input type="text" id="tickerInput" placeholder="예: 삼성전자, 테슬라, 엔비디아, AAPL" value="엔비디아">
     <button onclick="loadChart()">차트 불러오기</button>
+    <div class="hint">💡 한글 회사명, 미국 티커, 한국 6자리 코드 모두 가능</div>
     <div id="chartBox" style="height: 320px; margin-top: 12px;"></div>
   </div>
 
   <!-- 관심 종목 & 목표가 메모 -->
   <div class="card">
     <div style="font-weight:bold;">🎯 관심 종목 & 목표가 탐지 리스트</div>
-    <input type="text" id="stockName" placeholder="종목명 (예: 엔비디아)">
-    <input type="number" id="targetPrice" placeholder="목표 매수가 (예: 120)">
+    <input type="text" id="stockName" placeholder="종목명 (예: 삼성전자)">
+    <input type="number" id="targetPrice" placeholder="목표 매수가 (예: 70000)">
     <button onclick="addStock()">리스트에 추가</button>
     <div id="stockList" style="margin-top: 12px;"></div>
   </div>
 
   <script src="https://tradingview.com"></script>
   <script>
+    const stockDict = {
+      "삼성전자": "KRX:005930", "삼전": "KRX:005930",
+      "SK하이닉스": "KRX:000660", "하이닉스": "KRX:000660",
+      "현대차": "KRX:005380", "현대자동차": "KRX:005380",
+      "기아": "KRX:000270", "네이버": "KRX:035420", "카카오": "KRX:035720",
+      "LG에너지솔루션": "KRX:373220", "에코프로": "KRX:086520", "셀트리온": "KRX:068270",
+      "엔비디아": "NASDAQ:NVDA", "테슬라": "NASDAQ:TSLA", "애플": "NASDAQ:AAPL",
+      "마이크로소프트": "NASDAQ:MSFT", "마소": "NASDAQ:MSFT",
+      "구글": "NASDAQ:GOOGL", "알파벳": "NASDAQ:GOOGL",
+      "아마존": "NASDAQ:AMZN", "메타": "NASDAQ:META", "페이스북": "NASDAQ:META",
+      "팔란티어": "NYSE:PLTR", "넷플릭스": "NASDAQ:NFLX", "AMD": "NASDAQ:AMD",
+      "인텔": "NASDAQ:INTC", "퀄컴": "NASDAQ:QCOM", "브로드컴": "NASDAQ:AVGO",
+      "쿠팡": "NYSE:CPNG", "유니티": "NYSE:U", "아이온큐": "NYSE:IONQ",
+      "비트코인": "BINANCE:BTCUSDT", "이더리움": "BINANCE:ETHUSDT", "리플": "BINANCE:XRPUSDT"
+    };
+
     function loadChart() {
-      let symbol = document.getElementById('tickerInput').value.trim().toUpperCase();
+      let raw = document.getElementById('tickerInput').value.trim();
+      let upper = raw.toUpperCase().replace(/\s+/g, '');
+      let symbol = stockDict[upper] || upper;
       if (/^\d{6}$/.test(symbol)) symbol = "KRX:" + symbol;
+      
       document.getElementById('chartBox').innerHTML = "";
       new TradingView.widget({
         "autosize": true, "symbol": symbol, "interval": "D",
@@ -54,7 +75,7 @@
       const list = document.getElementById('stockList');
       list.innerHTML = stocks.map((s, i) => `
         <div class="item">
-          <div><strong>${s.name}</strong><br><span style="color:#4ade80;font-size:14px;">목표가: ${s.price}</span></div>
+          <div><strong>${s.name}</strong><br><span style="color:#4ade80;font-size:14px;">목표가: ${Number(s.price).toLocaleString()}</span></div>
           <button class="del-btn" onclick="delStock(${i})">삭제</button>
         </div>
       `).join('');
